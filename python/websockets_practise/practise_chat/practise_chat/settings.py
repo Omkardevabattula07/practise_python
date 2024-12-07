@@ -9,8 +9,11 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
 
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,11 +29,17 @@ SECRET_KEY = 'django-insecure-efi+%87p(^(8@74ta$8*ng=_8px6s@*02mtz6cw2qpqv+@%yid
 DEBUG = True
 
 ALLOWED_HOSTS = []
+SECRET_KEY = os.getenv('SECRET_KEY',"OIWEHYBNKSAJBIUUHA90325087235708lhisudiudh987yt9rewyr9ryhgiu")
+DEBUG = os.getenv('DEBUG') == "True"
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS','').split(',')
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'chat',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -54,7 +63,7 @@ ROOT_URLCONF = 'practise_chat.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -67,7 +76,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'practise_chat.wsgi.application'
+# WSGI_APPLICATION = 'practise_chat.wsgi.application'
+ASGI_APPLICATION = 'practise_chat.asgi.application'
 
 
 # Database
@@ -116,8 +126,40 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR,'static')
+]
+STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
+MEDIA_URL = 'media/'
+MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CHANNEL_LAYERS = {
+    "default": {
+        'BACKEND': "channels_redis.core.RedisChannelLayer",
+        "CONFIG" : {
+            "hosts" : [("127.0.0.1",6379)],
+        },
+    },
+}
+CHANNEL_LAYERS ={
+    "default" : {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG' : {
+            "hosts" : [os.getenv('REDIS_URL','redis://redis:6379')]
+        },
+    },
+}
+
+DATABASES = {
+    'default': {
+        "ENGINE":'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER' : os.getenv('POSTGRES_USER'),
+        'PASSWORD' : os.getenv('POSTGRES_PASSWORD'),
+        'HOST' : os.getenv ('POSTGRES_HOST'),
+        'PORT' : os.getenv("POSTGRES_PORT")
+    }
+}
